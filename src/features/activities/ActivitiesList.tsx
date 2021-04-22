@@ -1,3 +1,4 @@
+import { useState, MouseEvent } from "react";
 import { Item, Segment, Button, Label } from "semantic-ui-react";
 import { Activity } from "../modules/activity";
 
@@ -5,18 +6,33 @@ interface IProps {
   activities: Activity[];
   handleView: (id: string) => void;
   deleteActivity: (id: string) => void;
+  submitting: boolean;
 }
 
-const ActivitiesList = ({ activities, handleView, deleteActivity }: IProps) => {
+const ActivitiesList = ({
+  activities,
+  handleView,
+  deleteActivity,
+  submitting,
+}: IProps) => {
+  const [name, setName] = useState("");
+
   const handleClick = (id: string) => {
     handleView(id);
+  };
+
+  const handleDelete = (
+    event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
+  ): void => {
+    setName(event.currentTarget.name);
+    deleteActivity(event.currentTarget.name);
   };
   return (
     <Segment>
       <Item.Group divided>
         {activities.map((activity) => {
           return (
-            <Item>
+            <Item key={activity.id}>
               <Item.Content>
                 <Item.Header as="a">{activity.title}</Item.Header>
                 <Item.Meta>{activity.date}</Item.Meta>
@@ -29,8 +45,10 @@ const ActivitiesList = ({ activities, handleView, deleteActivity }: IProps) => {
                     <Button
                       color="red"
                       floated="right"
+                      name={activity.id}
+                      loading={submitting && name === activity.id}
                       content="Remove"
-                      onClick={() => deleteActivity(activity.id)}
+                      onClick={(e) => handleDelete(e)}
                     />
                     <Button
                       primary

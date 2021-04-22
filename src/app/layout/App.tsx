@@ -1,28 +1,40 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { v4 as uuid } from "uuid";
 import { Container } from "semantic-ui-react";
 import { Activity } from "../../features/modules/activity";
 import Navbar from "./Navbar";
 import ActivitiesDashboard from "../../features/activities/ActivitiesDashboards";
+import agent from "../api/agent";
+import SpinnerLoader from "../../features/loader/spinnerLoader";
 
 function App() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [selected, SetSelected] = useState<Activity | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmiting] = useState(false);
+
   const createOrEditActivity = (activity: Activity) => {
+    setSubmiting(true);
     if (activity.id) {
-      setActivities([
-        ...activities.filter((item) => item.id !== activity.id),
-        activity,
-      ]);
+      agent.Activities.update(activity).then(() => {
+        setActivities([
+          ...activities.filter((item) => item.id !== activity.id),
+          activity,
+        ]);
+        setEditMode(false);
+        setSubmiting(false);
+      });
     } else {
       activity.id = uuid();
-      setActivities([...activities, { ...activity }]);
+      agent.Activities.create(activity).then(() => {
+        setActivities([...activities, { ...activity }]);
+        setEditMode(false);
+        setSubmiting(false);
+      });
     }
 
     SetSelected(activity);
-    setEditMode(false);
   };
 
   const handleView = (id: string) => {
@@ -35,7 +47,12 @@ function App() {
   };
 
   const deleteActivity = (id: string) => {
-    setActivities(activities.filter((item) => item.id !== id));
+    console.log("here");
+    setSubmiting(true);
+    agent.Activities.delete(id).then(() => {
+      setActivities(activities.filter((item) => item.id !== id));
+      setSubmiting(false);
+    });
   };
 
   const handleOpenForm = (id?: string) => {
@@ -48,12 +65,21 @@ function App() {
   };
 
   useEffect(() => {
-    const data = axios
-      .get<Activity[]>("http://localhost:5000/api/Activities")
-      .then((res) => {
-        setActivities(res.data);
+    agent.Activities.list().then((data) => {
+      const newArr = data.map((act) => {
+        return {
+          ...act,
+          date: act.date.split("T")[0],
+        };
       });
+      setActivities(newArr);
+    });
+    setLoading(false);
   }, []);
+
+  if (loading) {
+    return <SpinnerLoader content="Loading" />;
+  }
 
   return (
     <div>
@@ -64,6 +90,7 @@ function App() {
           selectedView={selected}
           handleView={handleView}
           handleCancel={handleCancel}
+          submitting={submitting}
           handleOpenForm={handleOpenForm}
           handleCloseForm={handleCloseForm}
           editMode={editMode}

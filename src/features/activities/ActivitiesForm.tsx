@@ -1,17 +1,19 @@
 import React, { FormEvent, useState } from "react";
 import { Button, Form, Segment } from "semantic-ui-react";
 import { Activity } from "../modules/activity";
-
+import agent from "../../app/api/agent";
 interface IProp {
   activity: Activity | undefined;
   handleCloseForm: () => void;
   createOrEditActivity: (activity: Activity) => void;
+  submitting: boolean;
 }
 
 const ActivitiesForm = ({
   activity,
   handleCloseForm,
   createOrEditActivity,
+  submitting,
 }: IProp) => {
   const defaultState = activity ?? {
     id: "",
@@ -67,6 +69,7 @@ const ActivitiesForm = ({
         </Form.Field>
         <Form.Field>
           <input
+            type="date"
             placeholder="Date"
             name="date"
             value={formValues.date}
@@ -89,7 +92,13 @@ const ActivitiesForm = ({
             onChange={handleChange}
           />
         </Form.Field>
-        <Button floated="right" type="submit" positive content="Submit" />
+        <Button
+          floated="right"
+          type="submit"
+          positive
+          content="Submit"
+          loading={submitting}
+        />
         <Button
           floated="right"
           type="button"

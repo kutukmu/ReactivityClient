@@ -14,6 +14,7 @@ interface IProps {
   editMode: Boolean;
   createOrEditActivity: (activity: Activity) => void;
   deleteActivity: (id: string) => void;
+  submitting: boolean;
 }
 
 const ActivitiesDashboard = ({
@@ -26,6 +27,7 @@ const ActivitiesDashboard = ({
   handleCloseForm,
   createOrEditActivity,
   deleteActivity,
+  submitting,
 }: IProps) => {
   return (
     <Grid>
@@ -36,6 +38,7 @@ const ActivitiesDashboard = ({
               activities={activities}
               handleView={handleView}
               deleteActivity={deleteActivity}
+              submitting={submitting}
             />
           </List>
         </Grid.Column>
@@ -52,6 +55,7 @@ const ActivitiesDashboard = ({
             <ActivitiesForm
               activity={selectedView}
               handleCloseForm={handleCloseForm}
+              submitting={submitting}
               createOrEditActivity={createOrEditActivity}
             />
           )}
