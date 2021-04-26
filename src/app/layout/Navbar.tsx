@@ -1,25 +1,25 @@
 import { Container, Menu, Button } from "semantic-ui-react";
-interface IProp {
-  handleOpenForm: (id?: string) => void;
-}
-const Navbar = ({ handleOpenForm }: IProp) => {
+import { observer } from "mobx-react-lite";
+import { NavLink } from "react-router-dom";
+const Navbar = () => {
   return (
     <Menu inverted fixed="top">
       <Container>
-        <Menu.Item>
+        <Menu.Item as={NavLink} to="/" exact>
           <img
-            src="assets/logo.png"
+            src="./assets/logo.png"
             alt="asdf"
             style={{ marginRight: "10px" }}
           />
           Reactivities
         </Menu.Item>
-        <Menu.Item name="Activities" />
+        <Menu.Item name="Activities" as={NavLink} to="/activities" />
         <Menu.Item>
           <Button
             positive
             content="Create Activity"
-            onClick={() => handleOpenForm()}
+            as={NavLink}
+            to="/createActivities"
           />
         </Menu.Item>
       </Container>
@@ -27,4 +27,4 @@ const Navbar = ({ handleOpenForm }: IProp) => {
   );
 };
 
-export default Navbar;
+export default observer(Navbar);

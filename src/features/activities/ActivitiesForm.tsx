@@ -1,21 +1,22 @@
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useContext, useEffect, useState } from "react";
 import { Button, Form, Segment } from "semantic-ui-react";
-import { Activity } from "../modules/activity";
-import agent from "../../app/api/agent";
-interface IProp {
-  activity: Activity | undefined;
-  handleCloseForm: () => void;
-  createOrEditActivity: (activity: Activity) => void;
-  submitting: boolean;
-}
+import { observer } from "mobx-react-lite";
+import { useStore } from "../../app/stores/store";
+import { useHistory, useParams } from "react-router";
+import { v4 as uuid } from "uuid";
+import SpinnerLoader from "../loader/spinnerLoader";
+import { Link } from "react-router-dom";
+const ActivitiesForm = () => {
+  const history = useHistory();
+  const { activityStore } = useContext(useStore());
+  const {
+    submitting,
+    createOrEditActivity,
+    activityDetails,
+    loading,
+  } = activityStore;
 
-const ActivitiesForm = ({
-  activity,
-  handleCloseForm,
-  createOrEditActivity,
-  submitting,
-}: IProp) => {
-  const defaultState = activity ?? {
+  const [formValues, setValues] = useState({
     id: "",
     title: "",
     city: "",
@@ -23,8 +24,19 @@ const ActivitiesForm = ({
     description: "",
     venue: "",
     category: "",
-  };
-  const [formValues, setValues] = useState(defaultState);
+  });
+
+  const { id } = useParams<{ id: string }>();
+
+  useEffect(() => {
+    const f = async () => {
+      if (id) {
+        await activityDetails(id).then((res) => setValues(res!));
+      }
+    };
+
+    f();
+  }, [activityDetails, id]);
 
   const handleChange = (
     event: FormEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -37,8 +49,19 @@ const ActivitiesForm = ({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    createOrEditActivity(formValues);
+    if (formValues.id) {
+      createOrEditActivity(formValues).then(() => {
+        history.push(`/activities/${formValues.id}`);
+      });
+    } else {
+      formValues.id = uuid();
+      createOrEditActivity(formValues).then(() => {
+        history.push(`/activities/${formValues.id}`);
+      });
+    }
   };
+
+  if (loading) return <SpinnerLoader />;
 
   return (
     <Segment clearing>
@@ -103,11 +126,12 @@ const ActivitiesForm = ({
           floated="right"
           type="button"
           content="Cancel"
-          onClick={handleCloseForm}
+          as={Link}
+          to="/activities"
         />
       </Form>
     </Segment>
   );
 };
 
-export default ActivitiesForm;
+export default observer(ActivitiesForm);

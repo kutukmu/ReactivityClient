@@ -27,6 +27,7 @@ const request = {
   put: <T>(url: string, body: {}) =>
     axios.put<T>(url, body).then(ActivitiesResolver),
   delete: <T>(url: string) => axios.delete<T>(url).then(ActivitiesResolver),
+  details: <T>(url: string) => axios.get<T>(url).then(ActivitiesResolver),
 };
 
 const Activities = {
@@ -35,6 +36,7 @@ const Activities = {
   update: (activity: Activity) =>
     request.put<void>(`/Activities/${activity.id}`, activity),
   delete: (id: string) => request.delete<void>(`/Activities/${id}`),
+  details: (id: string) => request.get<Activity>(`/Activities/${id}`),
 };
 
 const agent = {

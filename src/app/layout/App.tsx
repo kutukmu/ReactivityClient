@@ -1,105 +1,62 @@
-import React, { useEffect, useState } from "react";
-import { v4 as uuid } from "uuid";
+import React, { useEffect, useContext } from "react";
 import { Container } from "semantic-ui-react";
-import { Activity } from "../../features/modules/activity";
 import Navbar from "./Navbar";
 import ActivitiesDashboard from "../../features/activities/ActivitiesDashboards";
-import agent from "../api/agent";
 import SpinnerLoader from "../../features/loader/spinnerLoader";
+import { useStore } from "../stores/store";
+import { observer } from "mobx-react-lite";
+import { Route, Switch, useLocation } from "react-router-dom";
+import Home from "../pages/Homepage";
+import ActivitiesForm from "../../features/activities/ActivitiesForm";
+import ActivityCard from "../../features/activities/ActivityCard";
 
 function App() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [editMode, setEditMode] = useState(false);
-  const [selected, SetSelected] = useState<Activity | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmiting] = useState(false);
-
-  const createOrEditActivity = (activity: Activity) => {
-    setSubmiting(true);
-    if (activity.id) {
-      agent.Activities.update(activity).then(() => {
-        setActivities([
-          ...activities.filter((item) => item.id !== activity.id),
-          activity,
-        ]);
-        setEditMode(false);
-        setSubmiting(false);
-      });
-    } else {
-      activity.id = uuid();
-      agent.Activities.create(activity).then(() => {
-        setActivities([...activities, { ...activity }]);
-        setEditMode(false);
-        setSubmiting(false);
-      });
-    }
-
-    SetSelected(activity);
-  };
-
-  const handleView = (id: string) => {
-    const found = activities.find((item) => item.id === id);
-    SetSelected(found);
-  };
-
-  const handleCancel = () => {
-    SetSelected(undefined);
-  };
-
-  const deleteActivity = (id: string) => {
-    console.log("here");
-    setSubmiting(true);
-    agent.Activities.delete(id).then(() => {
-      setActivities(activities.filter((item) => item.id !== id));
-      setSubmiting(false);
-    });
-  };
-
-  const handleOpenForm = (id?: string) => {
-    id ? handleView(id) : handleCancel();
-    setEditMode(true);
-  };
-
-  const handleCloseForm = () => {
-    setEditMode(false);
-  };
-
+  const { activityStore } = useContext(useStore());
+  const location = useLocation();
   useEffect(() => {
-    agent.Activities.list().then((data) => {
-      const newArr = data.map((act) => {
-        return {
-          ...act,
-          date: act.date.split("T")[0],
-        };
-      });
-      setActivities(newArr);
-    });
-    setLoading(false);
-  }, []);
+    activityStore.setActivities();
+  }, [activityStore]);
 
-  if (loading) {
+  if (activityStore.loading) {
     return <SpinnerLoader content="Loading" />;
   }
 
   return (
     <div>
-      <Navbar handleOpenForm={handleOpenForm} />
-      <Container style={{ marginTop: "70px" }}>
-        <ActivitiesDashboard
-          activities={activities}
-          selectedView={selected}
-          handleView={handleView}
-          handleCancel={handleCancel}
-          submitting={submitting}
-          handleOpenForm={handleOpenForm}
-          handleCloseForm={handleCloseForm}
-          editMode={editMode}
-          createOrEditActivity={createOrEditActivity}
-          deleteActivity={deleteActivity}
-        />
-      </Container>
+      <Route exact path="/" component={Home} />
+      <Route
+        path={`(/.+)`}
+        render={() => {
+          return (
+            <>
+              <Navbar />
+
+              <Container style={{ marginTop: "70px" }}>
+                <Switch>
+                  <Route
+                    exact
+                    path="/activities"
+                    component={ActivitiesDashboard}
+                  />
+                  <Route
+                    exact
+                    path="/activities/:id"
+                    component={ActivityCard}
+                  />
+                  <Route
+                    exact
+                    key={location.key}
+                    path={["/createActivities", "/createActivities/:id"]}
+                    component={ActivitiesForm}
+                  />
+                </Switch>
+              </Container>
+            </>
+          );
+        }}
+      />
     </div>
   );
 }
 
-export default App;
+export default observer(App);

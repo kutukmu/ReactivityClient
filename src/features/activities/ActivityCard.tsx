@@ -1,48 +1,39 @@
-import { Button, Card, Image } from "semantic-ui-react";
-import { Activity } from "../modules/activity";
+import { Grid } from "semantic-ui-react";
+import { useContext, useEffect } from "react";
+import { useStore } from "../../app/stores/store";
 
-interface IProp {
-  activity: Activity | undefined;
-  handleCancel: () => void;
-  handleOpenForm: (id: string) => void;
-  handleCloseForm: () => void;
-}
+import { observer } from "mobx-react-lite";
+import SpinnerLoader from "../loader/spinnerLoader";
+import { useParams } from "react-router";
+import ActiviyDetailedHeader from "./ActivityDetailedHeader";
+import ActivityDetailerInfo from "./ActivityDetailedInfo";
+import ActivityChatting from "./ActivityChatting";
+import ActivityDetailedSidebar from "./ActivityDetailedSidebar";
+const ActivityCard = (props: any) => {
+  const { activityStore } = useContext(useStore());
+  const { activity, loading } = activityStore;
+  const { id } = useParams<{ id: string }>();
 
-const ActivityCard = ({ activity, handleCancel, handleOpenForm }: IProp) => {
-  if (activity) {
-    return (
-      <Card fluid>
-        <Image
-          src={`/assets/categoryImages/${activity.category}.jpg`}
-          wrapped
-          ui={false}
-        />
-        <Card.Content>
-          <Card.Header>{activity.title}</Card.Header>
-          <Card.Meta>
-            <span className="date">{activity.date}</span>
-          </Card.Meta>
-          <Card.Description>{activity.description}</Card.Description>
-        </Card.Content>
-        <Card.Content extra>
-          <Button.Group widths={2}>
-            <Button
-              basic
-              color="blue"
-              onClick={() => handleOpenForm(activity.id)}
-            >
-              Edit
-            </Button>
-            <Button basic color="grey" onClick={handleCancel}>
-              Cancel
-            </Button>
-          </Button.Group>
-        </Card.Content>
-      </Card>
-    );
-  } else {
-    return <></>;
+  useEffect(() => {
+    activityStore.activityDetails(id);
+  }, [id, activityStore]);
+
+  if (!activity || loading) {
+    return <SpinnerLoader content="Loading" />;
   }
+
+  return (
+    <Grid>
+      <Grid.Column width={10}>
+        <ActiviyDetailedHeader activity={activity} />
+        <ActivityDetailerInfo activity={activity} />
+        <ActivityChatting />
+      </Grid.Column>
+      <Grid.Column width={6}>
+        <ActivityDetailedSidebar />
+      </Grid.Column>
+    </Grid>
+  );
 };
 
-export default ActivityCard;
+export default observer(ActivityCard);
